@@ -1,12 +1,17 @@
 package com.helper;
 
+import cucumber.runtime.ScenarioResult;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by v-fennev-ave on 7/10/15.
@@ -17,7 +22,6 @@ public class connectionHelper {
     private String browser;
     private String env;
     private Properties props = new Properties();
-    private WebDriverWait wait;
 
     public connectionHelper() {
 
@@ -30,15 +34,6 @@ public class connectionHelper {
 
         browser = props.getProperty("browser");
         env = props.getProperty("env");
-
-        //Select setup from config
-        if ("firefox".equals(browser)) {
-            setDriver(new FirefoxDriver());
-        } else {
-            //TO-DO other browsers
-        }
-        wait = new WebDriverWait(driver,5);
-
     }
 
     public WebDriver getDriver() {
@@ -52,4 +47,35 @@ public class connectionHelper {
     public void goToPage(String page) {
         this.driver.get(page);
     }
+
+    public void setWait() {this.driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS); }
+
+    public void startDriver(){
+        //Select setup from config
+        if ("firefox".equals(browser)) {
+            setDriver(new FirefoxDriver());
+            setWait();
+        } else {
+            //TO-DO other browsers
+        }
+    }
+
+    public void stopDriver() {  this.driver.quit(); }
+
+
+
+    public void embedScreenshot(ScenarioResult scenario) {
+        if (scenario.isFailed()) {
+            try {
+                final byte[] screenshot = ((TakesScreenshot) this.driver).getScreenshotAs(OutputType.BYTES);
+                scenario.embed(new ByteArrayInputStream(screenshot), "image/png");
+            } catch (WebDriverException wde) {
+                System.err.println(wde.getMessage());
+            } catch (ClassCastException cce) {
+                cce.printStackTrace();
+            }
+        }
+    }
+
+
 }
